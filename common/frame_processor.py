@@ -50,8 +50,10 @@ class FrameProcessor:
     
     # ラベルファイルの読み込み
     def load_label(self, label_path):
+        if not label_path:
+            return None
         labels_map = None
-        if label_path:
+        if os.path.isfile(label_path) :
             # ラベルファイルの読み込み
             with open(label_path, 'r') as f:
                 labels_map = [x.strip() for x in f]
