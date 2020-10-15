@@ -37,7 +37,7 @@ class Detector(object):
         start_time = time.time()                                    # ロード時間測定用
         log.info(f"    Loading the network to {device}")
         self.max_requests = queue_size
-        self.check_model_support(self.model, device, iecore)
+        # self.check_model_support(self.model, device, iecore)
         self.device_model = iecore.load_network(network=self.model, num_requests=self.max_requests, device_name=device)
         self.model = None
         log.info(f"    network is loaded    loading time : {time.time()- start_time:.4f}sec")
@@ -79,7 +79,13 @@ class Detector(object):
         self.outputs = [None, ] * self.active_requests
         for i in range(self.active_requests):
             self.device_model.requests[i].wait()
-            self.outputs[i] = self.device_model.requests[i].outputs
+            # 2021.1でのワーニング対策('outputs' property of InferRequest is deprecated.)
+            if hasattr(self.device_model.requests[i], "output_blobs") :
+                self.outputs[i] = {}                                                    # 2021.1以降
+                for ob_key, ob in self.device_model.requests[i].output_blobs.items() :
+                    self.outputs[i][ob_key] = ob.buffer
+            else :
+                self.outputs[i] = self.device_model.requests[i].outputs                 # 2020.4以前
             self.perf_stats[i] = self.device_model.requests[i].get_perf_counts()
         
         self.active_requests = 0
