@@ -127,6 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+tmp*/
 
 *.log
 *.tmp*
@@ -138,4 +139,4 @@ images
 images/
 models/
 public/
-
+*_2020/
