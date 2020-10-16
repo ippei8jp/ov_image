@@ -23,8 +23,8 @@ function download_model_zoo () {
 	local MODEL_NAME=$1
 	local LABEL_NAME=$2
 	
-	wget --no-check-certificate -P ${MODELS_DIR} ${BASE_URL}/${MODEL_NAME}/FP16/${MODEL_NAME}.bin
-	wget --no-check-certificate -P ${MODELS_DIR} ${BASE_URL}/${MODEL_NAME}/FP16/${MODEL_NAME}.xml
+	wget --no-check-certificate -O ${MODELS_DIR}/${MODEL_NAME}.bin ${BASE_URL}/${MODEL_NAME}/FP16/${MODEL_NAME}.bin
+	wget --no-check-certificate -O ${MODELS_DIR}/${MODEL_NAME}.xml ${BASE_URL}/${MODEL_NAME}/FP16/${MODEL_NAME}.xml
 	
 	# LABELファイルへのリンク作成
 	ln -sf `realpath --relative-to=${MODELS_DIR} ${MODELS_DIR}/${LABEL_NAME}.labels` ${MODELS_DIR}/${MODEL_NAME}.labels
