@@ -1,5 +1,6 @@
 import time
 import logging as log
+import pprint
 
 import cv2
 import numpy as np
@@ -20,6 +21,15 @@ class Detector(object):
         if device == "CPU":
             # サポートしているレイヤの一覧
             supported_layers = iecore.query_network(net, "CPU")
+            """
+            # For debug
+            print("=================================")
+            pprint.pprint(sorted(list(supported_layers.keys())))
+            print("=================================")
+            pprint.pprint(sorted(list(net.layers.keys())))
+            print("=================================")
+            """
+            # ******** net.layers は将来廃止されるので代替処理が必要 ********
             # netで使用されているレイヤでサポートしているレイヤの一覧にないもの
             not_supported_layers = [l for l in net.layers.keys() if l not in supported_layers]
             # サポートされていないレイヤがある？
@@ -37,6 +47,7 @@ class Detector(object):
         start_time = time.time()                                    # ロード時間測定用
         log.info(f"    Loading the network to {device}")
         self.max_requests = queue_size
+        # 2021.1でエラーになるのでとりあえずコメントアウト
         # self.check_model_support(self.model, device, iecore)
         self.device_model = iecore.load_network(network=self.model, num_requests=self.max_requests, device_name=device)
         self.model = None
