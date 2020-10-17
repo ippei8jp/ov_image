@@ -5,6 +5,14 @@ import math
 
 import pprint
 
+try :
+    import ngraph as ng
+    # ngraph モジュールについては以下を参照
+    # https://github.com/openvinotoolkit/openvino/blob/master/docs/nGraph_DG/nGraph_Python_API.md
+except ImportError :
+    # 2020.4以前は ngraph モジュールがない
+    ng = None
+ 
 # importのサーチパスを追加
 sys.path.insert(0,"../common")
 
@@ -49,25 +57,65 @@ class YoloDetector(Detector):
         # ------------------------------------------- Extracting layer parameters ------------------------------------------
         # Magic numbers are copied from yolo samples
         def __init__(self, param, side):
+            # print("**** param ****")
+            # pprint.pprint(param)
+            
             self.side    = side
-            self.num     =  3 if 'num'     not in param else int(param['num'])
-            self.coords  =  4 if 'coords'  not in param else int(param['coords'])
-            self.classes = 80 if 'classes' not in param else int(param['classes'])
-            self.anchors = [10.0, 13.0, 16.0, 30.0, 33.0, 23.0, 30.0, 61.0, 62.0, 45.0, 59.0, 119.0, 116.0, 90.0, 156.0, 198.0, 373.0, 326.0] \
-                              if 'anchors' not in param else [float(a) for a in param['anchors'].split(',')]
+            
+            if 'num'     not in param :
+                # 定義されていなかったときのデフォルト
+                self.num     =  3
+            elif type(param['num']) is str :
+                # model.layers[layer_name].params 経由で取得した場合
+                self.num     =  int(param['num'])
+            else :
+                # nodes[layer_name]._get_attributes() 経由で取得した場合
+                self.num     =  param['num']
+            
+            if 'coords'     not in param :
+                self.coords     =  4
+            elif type(param['coords']) is str :
+                self.coords     =  int(param['coords'])
+            else :
+                self.coords     =  param['coords']
+            
+            if 'classes'     not in param :
+                self.classes     =  80
+            elif type(param['classes']) is str :
+                self.classes     =  int(param['classes'])
+            else :
+                self.classes     =  param['classes']
+            
+            if 'anchors' not in param :
+                self.anchors = [10.0, 13.0, 16.0, 30.0, 33.0, 23.0, 30.0, 61.0, 62.0, 45.0, 59.0, 119.0, 116.0, 90.0, 156.0, 198.0, 373.0, 326.0]
+            elif type(param['anchors']) is str :
+                self.anchors = [float(a) for a in param['anchors'].split(',')]
+            else :
+                self.anchors = param['anchors']
+            
             isYoloV3 = False
-            if 'mask' in param:
+            if 'mask' not in param:
+                pass
+            elif type(param['mask']) is str :
                 if ',' in param['mask'] :               # 空のmaskキーがあったときの対策
                     isYoloV3 = True
                     mask = [int(idx) for idx in param['mask'].split(',')]
-                    self.num = len(mask)
-                    
-                    maskedAnchors = []
-                    for idx in mask:
-                        maskedAnchors += [self.anchors[idx * 2], self.anchors[idx * 2 + 1]]
-                    self.anchors = maskedAnchors
+            else :
+                if len(param['mask']) > 0 :               # 空のmaskキーがあったときの対策
+                    isYoloV3 = True
+                    mask = param['mask']
+            
+            if isYoloV3 :
+                self.num = len(mask)
+                maskedAnchors = []
+                for idx in mask:
+                    maskedAnchors += [self.anchors[idx * 2], self.anchors[idx * 2 + 1]]
+                self.anchors = maskedAnchors
             
             self.isYoloV3 = isYoloV3
+            
+            # print("**** self ****")
+            # pprint.pprint(vars(self))
     
     def __init__(self, model, confidence_threshold=0.5, iou_threshold=0.4):
         super(YoloDetector, self).__init__(model)
@@ -93,30 +141,41 @@ class YoloDetector(Detector):
             self.input_blob =  next(iter(model.inputs))
             self.input_shape = model.inputs[self.input_blob].shape
         
+        self.layer_params = {}
         '''
-        次の行は2021.1で以下のwarningが出るけど、解決策が分からない...
+        次の行で2021.1で以下のwarningが出る対策
         DeprecationWarning: 'layers' property of IENetwork class is deprecated. 
         For iteration over network please use get_ops()/get_ordered_ops() methods from nGraph Python API
         '''
-        '''
-        # get_ops()は以下で実行できるけど、その後が分からない...
-        import ngraph as ng
-        function = ng.function_from_cnn(model)
-        qweqwe=function.get_ops()
-        '''
-        layers = model.layers
-        self.layer_params = {}
-        for layer_name in model.outputs.keys() :
-            # print(layer_name)
-            output_shapes = layers[layers[layer_name].parents[0]].out_data[0].shape
-            output_params = layers[layer_name].params
-            
-            assert output_shapes[2] == output_shapes[3], \
-                    f"Invalid size of output blob. It sould be in NCHW layout and height should be equal to width. " \
-                     "Current height = {output_shapes[2]}, " \
-                     "current width = {output_shapes[3]}"
-             
-            self.layer_params[layer_name]  = self.YoloParams(output_params, output_shapes[2])
+        if ng :
+            # ng が定義されてたら → 2021.1以降 
+            function = ng.function_from_cnn(model)
+            nodes = { n.friendly_name : n for n in function.get_ops() }
+            self.layer_params_aaa = {}
+            for layer_name in model.outputs.keys() :
+                # print(layer_name)
+                output_shapes = list(nodes[layer_name].inputs()[0].get_source_output().get_node().shape)
+                output_params = nodes[layer_name]._get_attributes()
+                
+                assert output_shapes[2] == output_shapes[3], \
+                        f"Invalid size of output blob. It sould be in NCHW layout and height should be equal to width. " \
+                         "Current height = {output_shapes[2]}, " \
+                         "current width = {output_shapes[3]}"
+                 
+                self.layer_params[layer_name]  = self.YoloParams(output_params, output_shapes[2])
+        else :
+            layers = model.layers
+            for layer_name in model.outputs.keys() :
+                # print(layer_name)
+                output_shapes = layers[layers[layer_name].parents[0]].out_data[0].shape
+                output_params = layers[layer_name].params
+                
+                assert output_shapes[2] == output_shapes[3], \
+                        f"Invalid size of output blob. It sould be in NCHW layout and height should be equal to width. " \
+                         "Current height = {output_shapes[2]}, " \
+                         "current width = {output_shapes[3]}"
+                 
+                self.layer_params[layer_name]  = self.YoloParams(output_params, output_shapes[2])
         
     # 前処理
     def preprocess(self, frame):

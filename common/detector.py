@@ -30,6 +30,8 @@ class Detector(object):
             print("=================================")
             """
             # ******** net.layers は将来廃止されるので代替処理が必要 ********
+            # nGraph経由で取得できるはず。yolo/yolo_detector.py を参照
+            
             # netで使用されているレイヤでサポートしているレイヤの一覧にないもの
             not_supported_layers = [l for l in net.layers.keys() if l not in supported_layers]
             # サポートされていないレイヤがある？
