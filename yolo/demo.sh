@@ -44,6 +44,9 @@ if [ $# -eq 0 ]; then
 	usage
 fi
 
+# openvino-python環境で実行するときのために、LD_LIBRARY_PATHを追加
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${PYENV_ROOT}/versions/`pyenv version-name`/lib
+
 # 2番目以降すべてのパラメータを追加
 opt="${opt} ${@:2}"
 

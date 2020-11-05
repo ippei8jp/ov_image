@@ -7,6 +7,7 @@ import logging as log
 import pprint
 from argparse import ArgumentParser
 
+"""
 # 環境変数設定スクリプトが実行されているか確認 =======================================
 if not "INTEL_OPENVINO_DIR" in os.environ:
     print("**** ERROR !!!! ****")
@@ -18,6 +19,7 @@ else:
     # これを設定されてない変数に対して行うと例外を吐くので注意
     pass
 # ====================================================================================
+"""
 
 import cv2
 import numpy as np
