@@ -4,15 +4,12 @@ mkdir -p ${MODELS_DIR}
 
 # labelsファイルのダウンロード
 function download_labels_master () {
-	local LABEL_URL="https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names"
-	# 以下でも大丈夫(さがせばあちこちにあるみたい)
-	# local LABEL_URL="https://raw.githubusercontent.com/david8862/keras-YOLOv3-model-set/master/configs/coco_classes.txt"
+	# YOLO向けファイルとは違うので注意!！
+	local LABEL_URL="https://raw.githubusercontent.com/amikelive/coco-labels/master/coco-labels-paper.txt"
 	local LABEL_NAME="coco"
 	wget -O ${MODELS_DIR}/${LABEL_NAME}.labels  ${LABEL_URL}
-	
-	# local LABEL_URL="https://raw.githubusercontent.com/pjreddie/darknet/master/data/voc.names"
-	# LABEL_NAME="voc"
-	# wget -O ${MODELS_DIR}/${LABEL_NAME}.labels  ${LABEL_URL}
+	# ID=0 の分を追加
+	sed -i '1s/^/BLANK\n/' ${MODELS_DIR}/${LABEL_NAME}.labels
 }
 
 # model_downloaderを使用したダウンロード ##################################################################
