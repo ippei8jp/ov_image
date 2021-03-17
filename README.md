@@ -29,3 +29,5 @@
 ## 参考
 openVINOのインストールについては↓こちら  
 [openVINO フルパッケージをubuntuにインストール(改訂版)](https://ippei8jp.github.io/memoBlog/2020/06/16/openVINO_ubuntu_2.html)
+
+**※ openVINO 2019には対応していません。**  

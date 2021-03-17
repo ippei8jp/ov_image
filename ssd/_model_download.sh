@@ -18,7 +18,12 @@ function download_model_downloader () {
 	local LABEL_NAME=$2
 	
 	# 元モデルのダウンロード
-	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME} --output_dir ${MODELS_DIR}
+	### # --output_dirオプションの動きが変わった？？
+	### # とりあえずカレントにダウンロードするようにして回避
+	### ${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME} --output_dir ${MODELS_DIR}
+	pushd ${MODELS_DIR}
+	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME}
+	popd
 	
 	# IRモデルへの変換
 	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/converter.py --precisions FP16 --name ${MODEL_NAME} --download_dir  ${MODELS_DIR} --output_dir ${MODELS_DIR}

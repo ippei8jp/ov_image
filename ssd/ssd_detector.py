@@ -56,29 +56,41 @@ class SsdDetector(Detector):
         assert len(model.outputs) == 1, "Expected 1 output blob"
         # SSDのinputsは1とは限らないのでスキャンする
         img_info_input_blob = None
-        for blob_name in model.inputs:
-            # print(f'{blob_name}   {model.inputs[blob_name].shape}')
-            if len(model.inputs[blob_name].shape) == 4:
+        if hasattr(model, 'input_info') :        # 2021以降のバージョン
+            inputs = model.input_info
+        else :
+            inputs = model.inputs
+
+        for blob_name in inputs:
+            if hasattr(inputs[blob_name], 'shape') :        # 2020以前のバージョン
+                input_shape = inputs[blob_name].shape
+            else :                                          # 2021以降のバージョン
+                input_shape = inputs[blob_name].input_data.shape
+            # print(f'{blob_name}   {input_shape}')
+            if len(input_shape) == 4:
                 input_blob = blob_name
-            elif len(model.inputs[blob_name].shape) == 2:
-               # こういう入力レイヤがあるものがある？
+            elif len(input_shape) == 2:
+               # こういう入力レイヤがあるものがある？モノクロ画像？
                img_info_input_blob = blob_name
             else:
-                raise RuntimeError(f"Unsupported {len(model.inputs[blob_name].shape)} input layer '{ blob_name}'. Only 2D and 4D input layers are supported")
+                raise RuntimeError(f"Unsupported {len(input_shape)} input layer '{ blob_name}'. Only 2D and 4D input layers are supported")
         
         self.input_blob = input_blob
-        self.output_blob = next(iter(model.outputs))
-        self.input_shape = model.inputs[self.input_blob].shape
-        self.output_shape = model.outputs[self.output_blob].shape
-        
+        if hasattr(inputs[input_blob], 'shape') :       # 2020以前のバージョン
+            input_shape = inputs[input_blob].shape
+        else :                                          # 2021以降のバージョン
+            input_shape = inputs[input_blob].input_data.shape
+        self.input_shape = input_shape
         self.img_info = None
-        # こういう入力レイヤを持つものがある？
+
         if img_info_input_blob:
             self.img_info_input_blob = img_info_input_blob
             self.img_info = [self.input_shape[2], self.input_shape[3], 1]
         else :
             self.img_info_input_blob = None
         
+        self.output_blob = next(iter(model.outputs))
+        self.output_shape = model.outputs[self.output_blob].shape
         assert len(self.output_shape) == 4 and \
                self.output_shape[3] == self.Result.OUTPUT_SIZE, \
             f"Expected model output shape with {self.Result.OUTPUT_SIZE} outputs"

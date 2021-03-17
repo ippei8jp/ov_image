@@ -36,7 +36,12 @@ function download_model_downloader () {
 	local LABEL_NAME=$2
 	
 	# 元モデルのダウンロード
-	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME} --output_dir ${MODELS_DIR}
+	### # --output_dirオプションの動きが変わった？？
+	### # とりあえずカレントにダウンロードするようにして回避
+	### ${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME} --output_dir ${MODELS_DIR}
+	pushd ${MODELS_DIR}
+	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/downloader.py --name ${MODEL_NAME}
+	popd
 	
 	# IRモデルへの変換
 	${INTEL_OPENVINO_DIR}/deployment_tools/tools/model_downloader/converter.py --precisions FP16 --name ${MODEL_NAME} --download_dir  ${MODELS_DIR} --output_dir ${MODELS_DIR}
@@ -203,7 +208,6 @@ function download_and_convert_v4_tiny () {
 	ln -sf `realpath --relative-to=${MODELS_DIR} ${MODELS_DIR}/${LABEL_NAME}.labels` ${MODELS_DIR}/${MODEL_NAME}.labels
 }
 
-
 download_labels_master
 
 download_model_zoo         "yolo-v2-tiny-ava-0001" "voc"
@@ -220,39 +224,9 @@ download_and_convert_v4_tiny		# for yolo_v4_tiny
 
 << COMMENT
 【memo】============================================================
-download_and_convert_XXXを実行する際は最低限以下のモジュールが必要
-(openVINOのインストールが完了してれば問題なし)
-------------------------------------
-absl-py==0.10.0
-astor==0.8.1
-decorator==4.4.2
-defusedxml==0.6.0
-gast==0.2.2
-google-pasta==0.2.0
-grpcio==1.32.0
-h5py==2.10.0
-importlib-metadata==2.0.0
-Keras-Applications==1.0.8
-Keras-Preprocessing==1.1.2
-Markdown==3.3
-networkx==2.5
-numpy==1.18.5
-opt-einsum==3.3.0
-Pillow==7.2.0
-protobuf==3.13.0
-six==1.15.0
-tensorboard==1.15.0
-tensorflow==1.15.4
-tensorflow-estimator==1.15.1
-termcolor==1.1.0
-Werkzeug==1.0.1
-wrapt==1.12.1
-zipp==3.3.0
-------------------------------------
+download_and_convert_XXXを実行する際は
+openVINOのインストールが完了し他状態でpillowをインストールする必要がある
 
-以下を実行すればインストールされるはず
-pip install tensorflow==1.15.4
 pip install Pillow
-pip install networkx defusedxml
 
 COMMENT
