@@ -2,6 +2,11 @@ MODELS_DIR=models
 MODELS_DIR_ABS=`realpath ${MODELS_DIR}`
 mkdir -p ${MODELS_DIR}
 
+# openVINOのバージョン情報
+OV_VER_STR=$(echo `realpath $INTEL_OPENVINO_DIR` | sed -e "s/^.*openvino_\(.*\..*\)\..*$/\1/g")         # 2020.3 など
+OV_VER_MAJOR=$(echo $OV_VER_STR | sed -e "s/\(.*\)\..*/\1/g")                                              # 2020 など
+OV_VER_MINOR=$(echo $OV_VER_STR | sed -e "s/.*\.\(.*\)/\1/g")                                              # 3 など
+
 # labelsファイルのダウンロード
 function download_labels_master () {
 	local LABEL_URL="https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names"
@@ -18,7 +23,8 @@ function download_labels_master () {
 # MODEL ZOOからのダウンロード ##################################################################
 function download_model_zoo () {
 # 	local BASE_URL="https://download.01.org/opencv/2020/openvinotoolkit/2020.3/open_model_zoo/models_bin/1"
-	local BASE_URL="https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/1/"
+# 	local BASE_URL="https://download.01.org/opencv/2021/openvinotoolkit/2021.1/open_model_zoo/models_bin/1/"
+	local BASE_URL="https://download.01.org/opencv/2021/openvinotoolkit/2021.2/open_model_zoo/models_bin/3/"
 	
 	local MODEL_NAME=$1
 	local LABEL_NAME=$2
@@ -214,13 +220,19 @@ download_model_zoo         "yolo-v2-tiny-ava-0001" "voc"
 download_model_zoo         "yolo-v2-ava-0001"      "voc"
 
 download_model_downloader  "yolo-v3-tf"            "coco"
-download_model_downloader  "yolo-v3-tiny-tf"       "coco"
+if [ ${OV_VER_MAJOR} -ge 2021 ] ; then
+	# 以下は2020では存在しない
+	download_model_downloader  "yolo-v3-tiny-tf"       "coco"
+fi
 download_model_downloader  "yolo-v2-tf"            "coco"
 download_model_downloader  "yolo-v2-tiny-tf"       "coco"
 
 download_and_convert_v3_tiny		# for yolo_v3_tiny
-download_and_convert_v4				# for yolo_v4
 download_and_convert_v4_tiny		# for yolo_v4_tiny
+if [ ${OV_VER_MAJOR} -ge 2021 ] ; then
+	# 以下は2020ではエラーになる
+	download_and_convert_v4				# for yolo_v4
+fi
 
 << COMMENT
 【memo】============================================================
