@@ -1,4 +1,5 @@
 import sys
+import os
 import numpy as np
 
 import math
@@ -14,7 +15,7 @@ except ImportError :
     ng = None
  
 # importのサーチパスを追加
-sys.path.insert(0,"../common")
+sys.path.insert(0,os.path.join(os.path.dirname(__file__),"../common"))
 
 # ユーザ定義モジュール
 from detector import Detector

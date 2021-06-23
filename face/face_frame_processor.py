@@ -4,7 +4,7 @@ import time
 import logging as log
 
 # importのサーチパスを追加
-sys.path.insert(0,"../common")
+sys.path.insert(0,os.path.join(os.path.dirname(__file__),"../common"))
 
 import numpy as np
 

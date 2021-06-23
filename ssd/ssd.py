@@ -8,7 +8,7 @@ import pprint
 from argparse import ArgumentParser
 
 # importのサーチパスを追加
-sys.path.insert(0,"../common")
+sys.path.insert(0,os.path.join(os.path.dirname(__file__),"../common"))
 
 """
 # 環境変数設定スクリプトが実行されているか確認 =======================================
